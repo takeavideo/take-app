@@ -8,18 +8,37 @@ import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { ServiceCard } from '@/components/ServiceCard';
 import { BrandLogo } from '@/components/BrandLogo';
+import { MessageBox } from '@/components/MessageBox';
 import { colors, radius, spacing, typography } from '@/constants/theme';
+import { requestCurrentLocation } from '@/services/locationService';
 import { getAvailableProfessionals, getProfessionals, getServices } from '@/services/takeService';
 import { Professional } from '@/types/domain';
 
 export function ClientHomeScreen() {
   const router = useRouter();
   const [professionals, setProfessionals] = useState<Professional[]>(getProfessionals());
+  const [locationMessage, setLocationMessage] = useState<string | null>('Toque para usar sua localização e encontrar TAKES próximos.');
+  const [loadingLocation, setLoadingLocation] = useState(false);
   const services = getServices();
 
   useEffect(() => {
-    getAvailableProfessionals().then(setProfessionals).catch(() => setProfessionals(getProfessionals()));
+    loadNearbyProfessionals();
   }, []);
+
+  async function loadNearbyProfessionals() {
+    setLoadingLocation(true);
+    try {
+      const location = await requestCurrentLocation();
+      const nearbyProfessionals = await getAvailableProfessionals({ location });
+      setProfessionals(nearbyProfessionals);
+      setLocationMessage('Mostrando profissionais próximos à sua localização atual.');
+    } catch (error) {
+      setProfessionals(getProfessionals());
+      setLocationMessage(error instanceof Error ? error.message : 'Não foi possível obter sua localização.');
+    } finally {
+      setLoadingLocation(false);
+    }
+  }
 
   return (
     <Screen>
@@ -36,6 +55,13 @@ export function ClientHomeScreen() {
         <Text style={styles.heroTitle}>Chame um TAKE perto de você.</Text>
         <Button title="Solicitar agora" onPress={() => router.push('/service-request' as never)} />
       </View>
+
+      {locationMessage ? <MessageBox message={locationMessage} tone="info" /> : null}
+      <Button
+        title={loadingLocation ? 'Atualizando localização...' : 'Atualizar localização'}
+        variant="secondary"
+        onPress={loadNearbyProfessionals}
+      />
 
       <View style={styles.grid}>
         {services.map((service) => (

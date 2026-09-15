@@ -3,10 +3,15 @@ import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { MessageBox } from '@/components/MessageBox';
 import { OptionPill } from '@/components/OptionPill';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { colors, radius, spacing, typography } from '@/constants/theme';
+import { useAuth } from '@/providers/AuthProvider';
+import { requestCurrentLocation, reverseGeocodeApproximateLocation } from '@/services/locationService';
+import { createServiceRequest } from '@/services/marketplaceService';
+import { durationLabelToMinutes, estimatePrice, serviceLabelToSlug } from '@/utils/serviceTypes';
 
 const serviceTypes = ['Foto', 'Vídeo', 'Foto + Vídeo'];
 const whenOptions = ['Agora', 'Hoje', 'Agendar'];
@@ -14,10 +19,46 @@ const durationOptions = ['30 minutos', '1 hora', '2 horas', '4 horas'];
 
 export function ServiceRequestScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [service, setService] = useState(serviceTypes[0]);
   const [when, setWhen] = useState(whenOptions[0]);
   const [duration, setDuration] = useState(durationOptions[1]);
   const [description, setDescription] = useState('');
+  const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleFindProfessionals() {
+    if (!user) {
+      router.replace('/auth/sign-in' as never);
+      return;
+    }
+
+    setLoading(true);
+    setMessage(null);
+    try {
+      const location = await requestCurrentLocation();
+      const place = await reverseGeocodeApproximateLocation(location);
+      const serviceType = serviceLabelToSlug(service);
+      const durationMinutes = durationLabelToMinutes(duration);
+      const request = await createServiceRequest({
+        clientId: user.id,
+        serviceType,
+        description,
+        durationMinutes,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        city: place.city,
+        neighborhood: place.neighborhood,
+        estimatedPrice: estimatePrice(serviceType, durationMinutes),
+      });
+
+      router.push(`/service-searching/${request.id}` as never);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível criar sua solicitação.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <Screen>
@@ -25,6 +66,8 @@ export function ServiceRequestScreen() {
         title="Solicitação de serviço"
         subtitle="Conte o básico para encontrarmos profissionais disponíveis por perto."
       />
+
+      {message ? <MessageBox tone="error" message={message} /> : null}
 
       <Question title="O que você precisa?">
         {serviceTypes.map((item) => (
@@ -65,7 +108,10 @@ export function ServiceRequestScreen() {
         />
       </View>
 
-      <Button title="Encontrar profissionais" onPress={() => router.push('/client/index' as never)} />
+      <Button
+        title={loading ? 'Criando solicitação...' : 'Encontrar profissionais'}
+        onPress={handleFindProfessionals}
+      />
     </Screen>
   );
 }

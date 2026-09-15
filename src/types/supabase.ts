@@ -53,3 +53,67 @@ export type PortfolioItem = {
   description: string | null;
   created_at: string;
 };
+
+export type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+export type NearbyProfessional = {
+  professional_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  city: string | null;
+  neighborhood: string | null;
+  is_verified: boolean;
+  rating: number;
+  total_reviews: number;
+  service_type: ServiceTypeSlug;
+  price_from: number | null;
+  distance_km: number;
+};
+
+export type NearbyServiceRequest = {
+  request_id: string;
+  service_type: ServiceTypeSlug;
+  description: string | null;
+  scheduled_for: string | null;
+  duration_minutes: number;
+  city: string | null;
+  neighborhood: string | null;
+  estimated_price: number | null;
+  distance_km: number;
+  created_at: string;
+};
+
+export type AcceptedServiceRequest = {
+  request_id: string;
+  service_type: ServiceTypeSlug;
+  description: string | null;
+  scheduled_for: string | null;
+  duration_minutes: number;
+  city: string | null;
+  neighborhood: string | null;
+  estimated_price: number | null;
+  status: 'accepted' | 'in_progress' | 'completed';
+  created_at: string;
+};
+
+export type ServiceRequest = {
+  id: string;
+  client_id: string;
+  accepted_professional_id: string | null;
+  service_type: ServiceTypeSlug;
+  description: string | null;
+  scheduled_for: string | null;
+  duration_minutes: number;
+  latitude: number | null;
+  longitude: number | null;
+  city: string | null;
+  neighborhood: string | null;
+  status: 'searching' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+  estimated_price: number | null;
+  created_at: string;
+  updated_at: string;
+};

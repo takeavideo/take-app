@@ -10,7 +10,8 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "O TAKE usa sua galeria para adicionar fotos ao portfólio profissional."
+        "NSPhotoLibraryUsageDescription": "O TAKE usa sua galeria para adicionar fotos ao portfólio profissional.",
+        "NSLocationWhenInUseUsageDescription": "O TAKE usa sua localização para encontrar profissionais e solicitações próximas."
       }
     },
     "android": {

@@ -21,6 +21,8 @@ export function ProfessionalCard({ professional, onViewProfile }: ProfessionalCa
           <Text style={styles.meta}>⭐ {formatRating(professional.rating)}</Text>
           <Text style={styles.meta}>{professional.distanceKm}</Text>
         </View>
+        {professional.priceFrom ? <Text style={styles.price}>{professional.priceFrom}</Text> : null}
+        {professional.verified ? <Text style={styles.verified}>Profissional verificado</Text> : null}
       </View>
       <Button title="Ver perfil" onPress={onViewProfile} style={styles.button} />
     </Pressable>
@@ -66,6 +68,16 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.size.sm,
     fontWeight: '700',
+  },
+  price: {
+    color: colors.primaryDark,
+    fontSize: typography.size.xs,
+    fontWeight: '900',
+  },
+  verified: {
+    color: colors.success,
+    fontSize: typography.size.xs,
+    fontWeight: '900',
   },
   button: {
     minHeight: 40,

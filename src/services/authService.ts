@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getCurrentProfile, upsertProfile } from '@/services/profileService';
 import { UserType } from '@/types/supabase';
 
 export type SignUpInput = {
@@ -31,15 +32,26 @@ export async function signUpWithEmail(input: SignUpInput) {
   if (error) throw error;
   if (!data.user) throw new Error('Não foi possível criar o usuário.');
 
-  const { error: profileError } = await supabase.from('profiles').upsert({
-    user_id: data.user.id,
-    name: input.name,
-    email: input.email,
-    phone: input.phone ?? null,
-    user_type: input.userType,
-  });
-
-  if (profileError) throw profileError;
+  const existingProfile = await getCurrentProfile(data.user.id);
+  if (!existingProfile) {
+    await upsertProfile({
+      userId: data.user.id,
+      name: input.name,
+      email: input.email,
+      phone: input.phone ?? undefined,
+      userType: input.userType,
+    });
+  }
+  if (existingProfile) {
+    await upsertProfile({
+      userId: data.user.id,
+      name: input.name,
+      email: existingProfile.email,
+      phone: input.phone ?? undefined,
+      city: existingProfile.city ?? undefined,
+      userType: existingProfile.user_type,
+    });
+  }
   return data;
 }
 

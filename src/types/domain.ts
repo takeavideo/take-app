@@ -12,6 +12,8 @@ export type Professional = {
   location: string;
   imageUrl: string;
   verified: boolean;
+  priceFrom?: string;
+  isMock?: boolean;
   specialties: string[];
   equipment: string[];
   portfolio: string[];
