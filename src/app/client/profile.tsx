@@ -1,5 +1,5 @@
-import { PlaceholderTabScreen } from '@/screens/PlaceholderTabScreen';
+import { AccountProfileScreen } from '@/screens/AccountProfileScreen';
 
 export default function ProfileScreen() {
-  return <PlaceholderTabScreen title="Perfil" description="Gerencie dados, preferências e endereços salvos." />;
+  return <AccountProfileScreen mode="client" />;
 }

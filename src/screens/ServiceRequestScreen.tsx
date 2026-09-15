@@ -65,7 +65,7 @@ export function ServiceRequestScreen() {
         />
       </View>
 
-      <Button title="Encontrar profissionais" onPress={() => router.push('/client' as never)} />
+      <Button title="Encontrar profissionais" onPress={() => router.push('/client/index' as never)} />
     </Screen>
   );
 }

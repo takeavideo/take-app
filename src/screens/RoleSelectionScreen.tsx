@@ -9,12 +9,12 @@ const roles = [
   {
     title: 'Quero contratar',
     description: 'Encontre fotógrafos e videomakers.',
-    route: '/client',
+    route: '/auth/sign-up?type=client',
   },
   {
     title: 'Quero trabalhar',
     description: 'Receba oportunidades perto de você.',
-    route: '/pro',
+    route: '/auth/sign-up?type=professional',
   },
 ];
 
@@ -26,7 +26,7 @@ export function RoleSelectionScreen() {
       <BrandLogo compact />
       <View style={styles.copy}>
         <Text style={styles.title}>Como você quer usar o TAKE?</Text>
-        <Text style={styles.subtitle}>Escolha seu modo de entrada para navegar no protótipo.</Text>
+        <Text style={styles.subtitle}>Escolha seu modo de entrada para criar sua conta.</Text>
       </View>
 
       <View style={styles.cards}>

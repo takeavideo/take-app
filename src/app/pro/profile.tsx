@@ -1,5 +1,5 @@
-import { PlaceholderTabScreen } from '@/screens/PlaceholderTabScreen';
+import { AccountProfileScreen } from '@/screens/AccountProfileScreen';
 
 export default function ProProfileScreen() {
-  return <PlaceholderTabScreen title="Perfil" description="Dados profissionais, portfólio e disponibilidade." />;
+  return <AccountProfileScreen mode="professional" />;
 }

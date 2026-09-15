@@ -4,17 +4,26 @@ import { StyleSheet, View } from 'react-native';
 
 import { BrandLogo } from '@/components/BrandLogo';
 import { colors } from '@/constants/theme';
+import { useAuth } from '@/providers/AuthProvider';
 
 export function SplashScreenView() {
   const router = useRouter();
+  const { loading, profile, session } = useAuth();
 
   useEffect(() => {
+    if (loading) return;
+
     const timer = setTimeout(() => {
-      router.replace('/onboarding' as never);
+      if (!session) {
+        router.replace('/onboarding' as never);
+        return;
+      }
+
+      router.replace((profile?.user_type === 'professional' ? '/pro/index' : '/client/index') as never);
     }, 1100);
 
     return () => clearTimeout(timer);
-  }, [router]);
+  }, [loading, profile?.user_type, router, session]);
 
   return (
     <View style={styles.container}>

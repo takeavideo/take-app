@@ -38,7 +38,7 @@ export function RequestReceivedScreen() {
 
         <View style={styles.actions}>
           <Button title="RECUSAR" variant="danger" onPress={() => router.back()} style={styles.actionButton} />
-          <Button title="ACEITAR TAKE" onPress={() => router.push('/pro' as never)} style={styles.actionButton} />
+          <Button title="ACEITAR TAKE" onPress={() => router.push('/pro/index' as never)} style={styles.actionButton} />
         </View>
       </View>
     </Screen>

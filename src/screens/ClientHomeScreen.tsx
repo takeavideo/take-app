@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
@@ -8,12 +9,17 @@ import { SectionHeader } from '@/components/SectionHeader';
 import { ServiceCard } from '@/components/ServiceCard';
 import { BrandLogo } from '@/components/BrandLogo';
 import { colors, radius, spacing, typography } from '@/constants/theme';
-import { getProfessionals, getServices } from '@/services/takeService';
+import { getAvailableProfessionals, getProfessionals, getServices } from '@/services/takeService';
+import { Professional } from '@/types/domain';
 
 export function ClientHomeScreen() {
   const router = useRouter();
-  const professionals = getProfessionals();
+  const [professionals, setProfessionals] = useState<Professional[]>(getProfessionals());
   const services = getServices();
+
+  useEffect(() => {
+    getAvailableProfessionals().then(setProfessionals).catch(() => setProfessionals(getProfessionals()));
+  }, []);
 
   return (
     <Screen>

@@ -30,7 +30,7 @@ export function OnboardingScreen() {
 
   function handleNext() {
     if (isLast) {
-      router.push('/role' as never);
+      router.push('/auth/sign-in' as never);
       return;
     }
 

@@ -8,7 +8,10 @@
     "scheme": "takeapp",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "O TAKE usa sua galeria para adicionar fotos ao portfólio profissional."
+      }
     },
     "android": {
       "adaptiveIcon": {
