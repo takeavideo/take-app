@@ -34,6 +34,8 @@ export default function RootLayout() {
         <Stack.Screen name="professional-onboarding/index" />
         <Stack.Screen name="service-request/index" />
         <Stack.Screen name="service-searching/[id]" />
+        <Stack.Screen name="chat/[id]" />
+        <Stack.Screen name="notifications/index" />
         <Stack.Screen name="professional/[id]" />
         <Stack.Screen name="request-received/index" />
         <Stack.Screen name="client" />

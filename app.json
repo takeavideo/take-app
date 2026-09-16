@@ -9,12 +9,20 @@
     "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.take.app",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "O TAKE usa sua galeria para adicionar fotos ao portfólio profissional.",
-        "NSLocationWhenInUseUsageDescription": "O TAKE usa sua localização para encontrar profissionais e solicitações próximas."
+        "NSLocationWhenInUseUsageDescription": "O TAKE usa sua localização para encontrar profissionais e solicitações próximas.",
+        "NSUserNotificationUsageDescription": "O TAKE envia alertas sobre solicitações, mensagens e andamento dos serviços."
       }
     },
     "android": {
+      "package": "com.take.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "POST_NOTIFICATIONS"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -30,9 +38,16 @@
     "plugins": [
       "expo-router",
       [
+        "expo-notifications",
+        {
+          "color": "#F5A623",
+          "defaultChannel": "take-alerts"
+        }
+      ],
+      [
         "expo-splash-screen",
         {
-        "backgroundColor": "#F7F7F4",
+          "backgroundColor": "#F7F7F4",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }

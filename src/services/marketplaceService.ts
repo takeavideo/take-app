@@ -4,6 +4,7 @@ import {
   Coordinates,
   NearbyProfessional,
   NearbyServiceRequest,
+  ServiceRequestMessage,
   ServiceRequest,
   ServiceTypeSlug,
 } from '@/types/supabase';
@@ -115,6 +116,52 @@ export async function getAcceptedServiceRequest(requestId: string) {
 
   if (error) throw error;
   return ((data ?? []) as AcceptedServiceRequest[])[0] ?? null;
+}
+
+export async function startServiceRequest(requestId: string) {
+  const { data, error } = await supabase.rpc('start_service_request', {
+    p_request_id: requestId,
+  });
+
+  if (error) throw error;
+  return ((data ?? []) as { request_id: string; status: string; updated_at: string }[])[0] ?? null;
+}
+
+export async function completeServiceRequest(requestId: string) {
+  const { data, error } = await supabase.rpc('complete_service_request', {
+    p_request_id: requestId,
+  });
+
+  if (error) throw error;
+  return ((data ?? []) as { request_id: string; status: string; updated_at: string }[])[0] ?? null;
+}
+
+export async function getServiceRequestMessages(requestId: string) {
+  const { data, error } = await supabase.rpc('get_service_request_messages', {
+    p_service_request_id: requestId,
+  });
+
+  if (error) throw error;
+  return (data ?? []) as ServiceRequestMessage[];
+}
+
+export async function sendServiceRequestMessage(requestId: string, message: string) {
+  const { data, error } = await supabase.rpc('send_service_request_message', {
+    p_service_request_id: requestId,
+    p_message: message,
+  });
+
+  if (error) throw error;
+  return ((data ?? []) as ServiceRequestMessage[])[0] ?? null;
+}
+
+export async function markServiceRequestMessagesRead(requestId: string) {
+  const { data, error } = await supabase.rpc('mark_service_request_messages_read', {
+    p_service_request_id: requestId,
+  });
+
+  if (error) throw error;
+  return Number(data ?? 0);
 }
 
 export async function getPublicProfessionalProfile(professionalId: string) {

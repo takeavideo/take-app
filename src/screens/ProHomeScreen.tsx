@@ -7,9 +7,16 @@ import { MessageBox } from '@/components/MessageBox';
 import { Screen } from '@/components/Screen';
 import { StatCard } from '@/components/StatCard';
 import { colors, radius, shadows, spacing, typography } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/AuthProvider';
 import { requestCurrentLocation } from '@/services/locationService';
-import { acceptServiceRequest, getAcceptedServiceRequest, getNearbyServiceRequests } from '@/services/marketplaceService';
+import {
+  acceptServiceRequest,
+  completeServiceRequest,
+  getAcceptedServiceRequest,
+  getNearbyServiceRequests,
+  startServiceRequest,
+} from '@/services/marketplaceService';
 import { getProfessionalProfileForUser, setProfessionalAvailability } from '@/services/profileService';
 import { AcceptedServiceRequest, NearbyServiceRequest } from '@/types/supabase';
 import { durationMinutesToLabel, serviceSlugToLabel } from '@/utils/serviceTypes';
@@ -21,6 +28,7 @@ export function ProHomeScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [loadingOnline, setLoadingOnline] = useState(false);
   const [loadingRequests, setLoadingRequests] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const router = useRouter();
   const { user, profile } = useAuth();
 
@@ -57,6 +65,37 @@ export function ProHomeScreen() {
     if (!online) return;
     void Promise.resolve().then(loadNearbyRequests);
   }, [loadNearbyRequests, online]);
+
+  useEffect(() => {
+    if (!online || !user?.id) return;
+
+    const channel = supabase
+      .channel(`pro-notifications-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'app_notifications',
+          filter: `recipient_user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const type = String(payload.new?.type ?? '');
+          setUnreadNotifications((current) => current + 1);
+          if (type === 'new_take_nearby') {
+            void Promise.resolve().then(loadNearbyRequests);
+          }
+          if (type === 'chat_message') {
+            setMessage('Nova mensagem recebida no TAKE.');
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [loadNearbyRequests, online, user?.id]);
 
   async function handleGoOnline() {
     if (!user) {
@@ -125,6 +164,15 @@ export function ProHomeScreen() {
         <Text style={styles.subtitle}>Controle sua disponibilidade para novos TAKES.</Text>
       </View>
 
+      <Button
+        title={unreadNotifications > 0 ? `Notificações (${unreadNotifications})` : 'Notificações'}
+        variant="secondary"
+        onPress={() => {
+          setUnreadNotifications(0);
+          router.push('/notifications' as never);
+        }}
+      />
+
       {message ? <MessageBox message={message} tone={online ? 'success' : 'info'} /> : null}
 
       <View style={[styles.onlineCard, online && styles.onlineCardActive]}>
@@ -143,7 +191,26 @@ export function ProHomeScreen() {
             <Text style={styles.sectionTitle}>Solicitações próximas</Text>
             <Button title={loadingRequests ? 'Buscando...' : 'Atualizar'} variant="secondary" onPress={loadNearbyRequests} style={styles.smallButton} />
           </View>
-          {acceptedTake ? <AcceptedTakeCard take={acceptedTake} /> : null}
+          {acceptedTake ? (
+            <AcceptedTakeCard
+              take={acceptedTake}
+              onChat={() => router.push(`/chat/${acceptedTake.request_id}?peerName=${encodeURIComponent('Cliente TAKE')}` as never)}
+              onRefresh={async () => {
+                const refreshed = await getAcceptedServiceRequest(acceptedTake.request_id);
+                if (refreshed) setAcceptedTake(refreshed);
+              }}
+              onStart={async () => {
+                await startServiceRequest(acceptedTake.request_id);
+                const refreshed = await getAcceptedServiceRequest(acceptedTake.request_id);
+                if (refreshed) setAcceptedTake(refreshed);
+              }}
+              onComplete={async () => {
+                await completeServiceRequest(acceptedTake.request_id);
+                const refreshed = await getAcceptedServiceRequest(acceptedTake.request_id);
+                if (refreshed) setAcceptedTake(refreshed);
+              }}
+            />
+          ) : null}
           {requests.length === 0 && !acceptedTake ? (
             <Text style={styles.emptyText}>Nenhum TAKE compatível por perto agora.</Text>
           ) : null}
@@ -191,18 +258,55 @@ function TakeRequestCard({ request, onAccept }: TakeRequestCardProps) {
 
 type AcceptedTakeCardProps = {
   take: AcceptedServiceRequest;
+  onChat: () => void;
+  onStart: () => Promise<void>;
+  onComplete: () => Promise<void>;
+  onRefresh: () => Promise<void>;
 };
 
-function AcceptedTakeCard({ take }: AcceptedTakeCardProps) {
+function AcceptedTakeCard({ take, onChat, onStart, onComplete, onRefresh }: AcceptedTakeCardProps) {
+  const [loading, setLoading] = useState(false);
+
+  async function run(action: () => Promise<void>) {
+    setLoading(true);
+    try {
+      await action();
+      await onRefresh();
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <View style={styles.acceptedCard}>
       <Text style={styles.requestEyebrow}>TAKE confirmado</Text>
       <Text style={styles.requestTitle}>{serviceSlugToLabel(take.service_type)}</Text>
-      <Text style={styles.requestMeta}>{durationMinutesToLabel(take.duration_minutes)}</Text>
+      <Text style={styles.requestMeta}>
+        {durationMinutesToLabel(take.duration_minutes)} · {statusLabel(take.status)}
+      </Text>
       <Text style={styles.requestLocation}>{[take.neighborhood, take.city].filter(Boolean).join(', ')}</Text>
       {take.description ? <Text style={styles.requestDescription}>{take.description}</Text> : null}
+      <View style={styles.requestActions}>
+        <Button title="CHAT" variant="secondary" onPress={onChat} style={styles.actionButton} />
+        {take.status === 'accepted' ? (
+          <Button title={loading ? 'INICIANDO...' : 'INICIAR TAKE'} onPress={() => void run(onStart)} style={styles.actionButton} />
+        ) : null}
+        {take.status === 'in_progress' ? (
+          <Button title={loading ? 'FINALIZANDO...' : 'FINALIZAR TAKE'} onPress={() => void run(onComplete)} style={styles.actionButton} />
+        ) : null}
+      </View>
     </View>
   );
+}
+
+function statusLabel(status: AcceptedServiceRequest['status']) {
+  const labels: Record<AcceptedServiceRequest['status'], string> = {
+    accepted: 'Confirmado',
+    in_progress: 'Em andamento',
+    completed: 'Concluído',
+  };
+
+  return labels[status];
 }
 
 const styles = StyleSheet.create({

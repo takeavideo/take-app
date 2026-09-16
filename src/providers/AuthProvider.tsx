@@ -3,6 +3,7 @@ import { createContext, PropsWithChildren, useCallback, useContext, useEffect, u
 
 import { isSupabaseConfigured } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
+import { registerDeviceForPushNotifications } from '@/services/notificationService';
 import { getCurrentProfile } from '@/services/profileService';
 import { Profile } from '@/types/supabase';
 
@@ -53,6 +54,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (!mounted) return;
 
       setSession(data.session);
+      if (data.session?.access_token) {
+        supabase.realtime.setAuth(data.session.access_token);
+      }
       if (data.session?.user.id) {
         await loadProfile(data.session.user.id);
       }
@@ -63,6 +67,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      if (nextSession?.access_token) {
+        supabase.realtime.setAuth(nextSession.access_token);
+      }
       if (nextSession?.user.id) {
         loadProfile(nextSession.user.id);
         return;
@@ -76,6 +83,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!session?.user.id) return;
+
+    void registerDeviceForPushNotifications();
+  }, [session?.user.id]);
 
   const value = useMemo(
     () => ({

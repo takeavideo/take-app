@@ -10,7 +10,10 @@ import { ServiceCard } from '@/components/ServiceCard';
 import { BrandLogo } from '@/components/BrandLogo';
 import { MessageBox } from '@/components/MessageBox';
 import { colors, radius, spacing, typography } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/providers/AuthProvider';
 import { requestCurrentLocation } from '@/services/locationService';
+import { listAppNotifications } from '@/services/notificationService';
 import { getAvailableProfessionals, getProfessionals, getServices } from '@/services/takeService';
 import { Professional } from '@/types/domain';
 
@@ -19,11 +22,48 @@ export function ClientHomeScreen() {
   const [professionals, setProfessionals] = useState<Professional[]>(getProfessionals());
   const [locationMessage, setLocationMessage] = useState<string | null>('Toque para usar sua localização e encontrar TAKES próximos.');
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const { user } = useAuth();
   const services = getServices();
 
   useEffect(() => {
     loadNearbyProfessionals();
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    async function loadUnread() {
+      try {
+        const notifications = await listAppNotifications();
+        setUnreadNotifications(notifications.filter((notification) => !notification.read_at).length);
+      } catch {
+        setUnreadNotifications(0);
+      }
+    }
+
+    void Promise.resolve().then(loadUnread);
+
+    const channel = supabase
+      .channel(`client-notifications-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'app_notifications',
+          filter: `recipient_user_id=eq.${user.id}`,
+        },
+        () => {
+          void Promise.resolve().then(loadUnread);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   async function loadNearbyProfessionals() {
     setLoadingLocation(true);
@@ -55,6 +95,12 @@ export function ClientHomeScreen() {
         <Text style={styles.heroTitle}>Chame um TAKE perto de você.</Text>
         <Button title="Solicitar agora" onPress={() => router.push('/service-request' as never)} />
       </View>
+
+      <Button
+        title={unreadNotifications > 0 ? `Notificações (${unreadNotifications})` : 'Notificações'}
+        variant="secondary"
+        onPress={() => router.push('/notifications' as never)}
+      />
 
       {locationMessage ? <MessageBox message={locationMessage} tone="info" /> : null}
       <Button

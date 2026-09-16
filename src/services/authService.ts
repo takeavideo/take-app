@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { revokePushToken } from '@/services/notificationService';
 import { getCurrentProfile, upsertProfile } from '@/services/profileService';
 import { UserType } from '@/types/supabase';
 
@@ -61,6 +62,12 @@ export async function sendPasswordReset(email: string) {
 }
 
 export async function signOut() {
+  try {
+    await revokePushToken();
+  } catch {
+    // Logout should continue even if the device cannot revoke a local push token.
+  }
+
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }

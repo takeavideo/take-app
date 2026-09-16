@@ -1,6 +1,13 @@
 export type UserType = 'client' | 'professional';
 export type ServiceTypeSlug = 'photography' | 'video' | 'photo_video' | 'event';
 export type PortfolioMediaType = 'image' | 'video';
+export type ServiceRequestStatus = 'searching' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+export type NotificationType =
+  | 'new_take_nearby'
+  | 'take_accepted'
+  | 'take_in_progress'
+  | 'take_completed'
+  | 'chat_message';
 
 export type Profile = {
   id: string;
@@ -96,7 +103,7 @@ export type AcceptedServiceRequest = {
   city: string | null;
   neighborhood: string | null;
   estimated_price: number | null;
-  status: 'accepted' | 'in_progress' | 'completed';
+  status: Extract<ServiceRequestStatus, 'accepted' | 'in_progress' | 'completed'>;
   created_at: string;
 };
 
@@ -112,8 +119,30 @@ export type ServiceRequest = {
   longitude: number | null;
   city: string | null;
   neighborhood: string | null;
-  status: 'searching' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+  status: ServiceRequestStatus;
   estimated_price: number | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ServiceRequestMessage = {
+  id: string;
+  service_request_id: string;
+  sender_role: 'client' | 'professional' | 'unknown';
+  message: string;
+  created_at: string;
+  read_at: string | null;
+};
+
+export type AppNotification = {
+  id: string;
+  recipient_user_id: string;
+  service_request_id: string | null;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  delivered_at: string | null;
+  read_at: string | null;
+  created_at: string;
 };
