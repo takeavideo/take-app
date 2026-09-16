@@ -27,10 +27,12 @@ export function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [userType, setUserType] = useState<UserType>(initialUserType);
   const [message, setMessage] = useState<string | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
     setMessage(null);
+    setPendingConfirmation(false);
 
     if (!isConfigured) {
       setMessage('Configure o Supabase no arquivo .env para testar cadastro real.');
@@ -44,18 +46,25 @@ export function SignUpScreen() {
 
     setLoading(true);
     try {
-      await signUpWithEmail({
+      const result = await signUpWithEmail({
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim(),
         password,
         userType,
       });
+
+      if (result.needsEmailConfirmation) {
+        setPendingConfirmation(true);
+        return;
+      }
+
       await refreshProfile();
       router.replace(
         (userType === 'professional' ? '/professional-onboarding/index' : '/client-onboarding/index') as never,
       );
     } catch (error) {
+      console.error('[TAKE sign-up screen] Falha no cadastro', error);
       setMessage(error instanceof Error ? error.message : 'Não foi possível criar sua conta.');
     } finally {
       setLoading(false);
@@ -70,30 +79,46 @@ export function SignUpScreen() {
         <Text style={styles.subtitle}>Entre no TAKE como cliente ou profissional.</Text>
       </View>
 
-      {message ? <MessageBox tone="error" message={message} /> : null}
-
-      <View style={styles.card}>
-        <TextField label="Nome" value={name} onChangeText={setName} placeholder="Seu nome" />
-        <TextField label="Telefone" value={phone} onChangeText={setPhone} placeholder="(00) 00000-0000" keyboardType="phone-pad" />
-        <TextField label="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-        <TextField label="Senha" value={password} onChangeText={setPassword} secureTextEntry />
-
-        <View style={styles.typeBlock}>
-          <Text style={styles.typeTitle}>Como você quer usar o TAKE?</Text>
-          <View style={styles.options}>
-            <OptionPill label="QUERO CONTRATAR" selected={userType === 'client'} onPress={() => setUserType('client')} />
-            <OptionPill label="QUERO TRABALHAR" selected={userType === 'professional'} onPress={() => setUserType('professional')} />
+      {pendingConfirmation ? (
+        <>
+          <MessageBox tone="success" message={'Conta criada com sucesso!\nConfirme seu e-mail para continuar no TAKE.'} />
+          <View style={styles.card}>
+            <Button title="Já confirmei meu e-mail" onPress={() => router.replace('/auth/sign-in' as never)} />
+            <Pressable onPress={() => router.replace('/auth/sign-in' as never)}>
+              <Text style={styles.link}>Voltar para entrar</Text>
+            </Pressable>
           </View>
+        </>
+      ) : null}
+
+      {message && !pendingConfirmation ? <MessageBox tone="error" message={message} /> : null}
+
+      {!pendingConfirmation ? (
+        <View style={styles.card}>
+          <TextField label="Nome" value={name} onChangeText={setName} placeholder="Seu nome" />
+          <TextField label="Telefone" value={phone} onChangeText={setPhone} placeholder="(00) 00000-0000" keyboardType="phone-pad" />
+          <TextField label="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+          <TextField label="Senha" value={password} onChangeText={setPassword} secureTextEntry />
+
+          <View style={styles.typeBlock}>
+            <Text style={styles.typeTitle}>Como você quer usar o TAKE?</Text>
+            <View style={styles.options}>
+              <OptionPill label="QUERO CONTRATAR" selected={userType === 'client'} onPress={() => setUserType('client')} />
+              <OptionPill label="QUERO TRABALHAR" selected={userType === 'professional'} onPress={() => setUserType('professional')} />
+            </View>
+          </View>
+
+          <Button title={loading ? 'Criando...' : 'Criar conta'} onPress={handleSubmit} />
         </View>
+      ) : null}
 
-        <Button title={loading ? 'Criando...' : 'Criar conta'} onPress={handleSubmit} />
-      </View>
-
-      <Link href="/auth/sign-in" asChild>
-        <Pressable style={styles.secondaryCard}>
-          <Text style={styles.secondaryText}>Já tenho conta</Text>
-        </Pressable>
-      </Link>
+      {!pendingConfirmation ? (
+        <Link href="/auth/sign-in" asChild>
+          <Pressable style={styles.secondaryCard}>
+            <Text style={styles.secondaryText}>Já tenho conta</Text>
+          </Pressable>
+        </Link>
+      ) : null}
     </Screen>
   );
 }
@@ -136,6 +161,12 @@ const styles = StyleSheet.create({
   secondaryCard: {
     alignItems: 'center',
     padding: spacing.lg,
+  },
+  link: {
+    color: colors.primaryDark,
+    fontSize: typography.size.sm,
+    fontWeight: '900',
+    textAlign: 'center',
   },
   secondaryText: {
     color: colors.primaryDark,

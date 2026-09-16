@@ -31,9 +31,14 @@ export function SignInScreen() {
     try {
       const result = await signInWithEmail(email.trim(), password);
       await refreshProfile();
-      const userType = result.user?.user_metadata?.user_type;
-      router.replace((userType === 'professional' ? '/pro/index' : '/client/index') as never);
+      if (result.profile.user_type === 'professional' && result.profileCreated) {
+        router.replace('/professional-onboarding/index' as never);
+        return;
+      }
+
+      router.replace((result.profile.user_type === 'professional' ? '/pro/index' : '/client/index') as never);
     } catch (error) {
+      console.error('[TAKE sign-in screen] Falha no login', error);
       setMessage(error instanceof Error ? error.message : 'Não foi possível entrar.');
     } finally {
       setLoading(false);
