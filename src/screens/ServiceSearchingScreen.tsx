@@ -82,7 +82,7 @@ export function ServiceSearchingScreen() {
     setMessage(null);
     try {
       await cancelServiceRequest(id);
-      router.replace('/client/index' as never);
+      router.replace('/client' as never);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível cancelar este TAKE.');
     } finally {
@@ -128,7 +128,7 @@ export function ServiceSearchingScreen() {
 
         <View style={styles.actions}>
           {confirmed ? (
-            <Button title="Voltar ao início" onPress={() => router.replace('/client/index' as never)} />
+            <Button title="Voltar ao início" onPress={() => router.replace('/client' as never)} />
           ) : (
             <Button
               title={loadingCancel ? 'Cancelando...' : 'Cancelar busca'}

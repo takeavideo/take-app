@@ -27,7 +27,7 @@ export function ClientOnboardingScreen() {
     }
 
     if (!isConfigured) {
-      router.replace('/client/index' as never);
+      router.replace('/client' as never);
       return;
     }
 
@@ -42,7 +42,7 @@ export function ClientOnboardingScreen() {
         city: city.trim(),
       });
       await refreshProfile();
-      router.replace('/client/index' as never);
+      router.replace('/client' as never);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível salvar seu perfil.');
     } finally {

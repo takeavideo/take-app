@@ -61,7 +61,7 @@ export function SignUpScreen() {
 
       await refreshProfile();
       router.replace(
-        (userType === 'professional' ? '/professional-onboarding/index' : '/client-onboarding/index') as never,
+        (userType === 'professional' ? '/professional-onboarding' : '/client-onboarding') as never,
       );
     } catch (error) {
       console.error('[TAKE sign-up screen] Falha no cadastro', error);

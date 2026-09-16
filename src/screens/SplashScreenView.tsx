@@ -19,7 +19,7 @@ export function SplashScreenView() {
         return;
       }
 
-      router.replace((profile?.user_type === 'professional' ? '/pro/index' : '/client/index') as never);
+      router.replace((profile?.user_type === 'professional' ? '/pro' : '/client') as never);
     }, 1100);
 
     return () => clearTimeout(timer);

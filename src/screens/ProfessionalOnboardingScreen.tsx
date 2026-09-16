@@ -92,7 +92,7 @@ export function ProfessionalOnboardingScreen() {
     }
 
     if (!isConfigured) {
-      router.replace('/pro/index' as never);
+      router.replace('/pro' as never);
       return;
     }
 
@@ -118,7 +118,7 @@ export function ProfessionalOnboardingScreen() {
         portfolio: uploadedPortfolio,
       });
       await refreshProfile();
-      router.replace('/pro/index' as never);
+      router.replace('/pro' as never);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível concluir seu perfil profissional.');
     } finally {
